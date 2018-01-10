@@ -267,6 +267,11 @@ worldcup %>%
 # arrumados, mostramos um exemplo que usou recolher para converter dados em um formato 
 # arrumado. Os dados são primeiro em um formato descomprometido:
 
+data("VADeaths")
+head(VADeaths)
+
+
+
 
 
 
