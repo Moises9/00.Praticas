@@ -376,4 +376,129 @@ team_standings %>% slice(1:3)
 
 
 
+# Este quadro de dados tem uma observação por equipe e os nomes das equipes são consistentes
+# com os nomes das equipes no quadro de dados do Worldcup.
+
+# Você pode usar as diferentes funções da família * _join para mesclar esses dados de equipe
+# com as estatísticas do jogador no quadro worldcupdata. Depois de fazer isso, você pode usar
+# outras ferramentas de limpeza de dados do dplyr para puxar rapidamente e explorar partes
+# interessantes do conjunto de dados. Os principais argumentos para as funções * _join são
+# os nomes de objeto dos dois quadros de dados para se juntar e por, que especifica quais 
+# variáveis usar para corresponder as observações dos dois quadros de dados.
+
+# Existem várias funções na família * _join. Essas funções combinam dois quadros de dados;
+# eles diferem em como eles lidam com observações que existem em um, mas não em ambos os 
+# quadros de dados. Aqui estão as quatro funções desta família que você provavelmente usará
+# mais frequentemente:
+
+
+# Função O que ele inclui no quadro de dados mesclado-------------------
+ 
+# left_join : Inclui todas as observações no quadro de dados à esquerda, 
+# independentemente de haver ou não uma correspondência no quadro de dados certo
+
+# right_join: Inclui todas as observações no quadro de dados correto, 
+# independentemente de haver ou não uma correspondência no quadro de dados à esquerda
+ 
+# inner_join: Inclui apenas observações que estão em ambos os quadros de dados
+ 
+# full_join: Inclui todas as observações de ambos os quadros de dados
+
+# Nesta tabela, o quadro de dados "esquerdo" refere-se à primeira entrada de quadro de 
+# dados na chamada * _join, enquanto o quadro de dados "direito" se refere à segunda 
+# entrada de quadro de dados na função. Por exemplo, na chamada
+
+left_join(world_cup, team_standings, by = "Team")
+
+
+# O quadro de dados world_cup é o quadro de dados "à esquerda" e o quadro de dados 
+# team_standings é o quadro de dados "correto". Portanto, o uso de left_join incluiria
+# todas as linhas da World_cup, independentemente de o jogador ter ou não uma equipe 
+# listada em time_journal, enquanto a right_join incluiria todas as linhas do team_standings, 
+# independentemente de haver ou não jogadores dessa equipe no world_cup.
+
+# Lembre-se de que, se você estiver usando a tubulação, o primeiro quadro de dados
+# ("à esquerda" para essas funções) é, por padrão, o quadro de dados criado pelo código
+# logo antes do tubo. Quando você mescla os quadros de dados como uma etapa no código 
+# de canal, portanto, a moldura de dados "esquerda" é a canalizada na função, enquanto
+# o quadro de dados "direito" é o indicado na chamada de função * _join.
+ 
+# Como um exemplo de fusão, digamos que você deseja criar uma tabela dos 5 melhores
+# jogadores por tiros no objetivo, bem como a posição final para cada uma dessas equipes
+# de jogadores, usando os dados do worldcup e team_standings. Você pode fazer isso executando:
+
+data(worldcup)
+worldcup %>% 
+  mutate(Name = rownames(worldcup),
+         Team = as.character(Team)) %>%
+  select(Name, Position, Shots, Team) %>%
+  arrange(desc(Shots)) %>%
+  slice(1:5) %>%
+  left_join(team_standings, by = "Team") %>% # Merge in team standings
+  rename("Team Standing" = Standing) %>%
+  kable()
+
+
+# Além da fusão neste código, há algumas outras coisas interessantes para apontar:
+  
+# O código usa a função as.character dentro de uma chamada mutada para alterar o nome 
+# da equipe de um fator para um personagem no quadro de dados do mundo. Ao combinar dois
+# quadros de dados, é mais seguro se a coluna que você está usando para mesclar tem a
+# mesma classe em cada quadro de dados. A coluna "Equipe" é uma classe de caracteres
+# no quadro de dados theteam_standings, mas uma classe de fatores no quadro worldcupdata,
+# então essa chamada converte essa coluna para uma classe de personagem na worldcup.
+# A função left_join ainda executará uma mesclagem se você não incluir essa chamada,
+# mas lançará um aviso de que é coagir a coluna na worldcup para um vetor de caracteres.
+# Geralmente, é mais seguro fazê-lo explicitamente.
+ 
+# Ele usa a função de seleção para remover colunas em que não nos interessamos e também 
+# colocar as colunas que queremos manter na ordem que gostaríamos para a mesa final.
+ 
+# Ele usa arranjos seguido de uma fatia para retirar os 5 melhores jogadores e ordená-los
+# por número de tiros.
+ 
+# Para um dos nomes das colunas, queremos usar "Team Standing" em vez do nome
+# da coluna atual "Standing". Este código usa renomear no final para fazer essa
+# alteração logo antes de criar a tabela. Você também pode usar o argumento 
+# col.names na função kable para personalizar todos os nomes das colunas na 
+# tabela final, mas essa chamada renomeada é uma solução rápida, pois queremos
+# apenas mudar um nome de coluna.
+
+
+# WORKING WITH DATES, TIMES, TIMES ZONES ----------------------------------
+
+# Os objetivos de aprendizagem para esta seção são:
+  
+# Transforme dados não arrumados em dados arrumados
+ 
+# Manipular e transformar uma variedade de tipos de dados, incluindo datas, horas e 
+# dados de texto.
+
+ 
+# R tem classes de objetos especiais para datas e data-épocas. Muitas vezes, vale a 
+# pena converter uma coluna em um quadro de dados para um desses tipos de objetos especiais, 
+# porque você pode fazer algumas coisas muito úteis com objetos de data ou data-hora, 
+# incluindo retirar o mês ou dia da semana das observações em o objeto, ou determinar a
+# diferença de tempo entre dois valores.
+ 
+# Muitos dos exemplos desta seção usam o objeto ext_tracks carregado anteriormente no livro.
+# Se você precisar recarregar isso, você pode usar o seguinte código para fazê-lo:
+
+
+ext_tracks_widths <- c(7, 10, 2, 2, 3, 5, 5, 6, 4, 5, 4, 4, 5, 3, 4, 3, 3, 3,
+                       4, 3, 3, 3, 4, 3, 3, 3, 2, 6, 1)
+ext_tracks_colnames <- c("storm_id", "storm_name", "month", "day",
+                         "hour", "year", "latitude", "longitude",
+                         "max_wind", "min_pressure", "rad_max_wind",
+                         "eye_diameter", "pressure_1", "pressure_2",
+                         paste("radius_34", c("ne", "se", "sw", "nw"), sep = "_"),
+                         paste("radius_50", c("ne", "se", "sw", "nw"), sep = "_"),
+                         paste("radius_64", c("ne", "se", "sw", "nw"), sep = "_"),
+                         "storm_type", "distance_to_land", "final")
+
+# Read the file in from its url
+ext_tracks <- read_fwf(ext_tracks_file, 
+                       fwf_widths(ext_tracks_widths, ext_tracks_colnames),
+                       na = "-99")
+
 
