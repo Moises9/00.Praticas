@@ -273,24 +273,92 @@ head(VADeaths)
 
 
 
+# Depois de mudar as categorias de idade de nomes de linha para uma variável (o que pode 
+# ser feito com a função de mutação), o problema-chave com a limpeza dos dados é que as 
+# variáveis de urbano / rural e masculino / feminino não estão em suas próprias colunas,
+# mas sim são incorporados na estrutura das colunas. Para corrigir isso, você pode usar 
+# a função reunir, para coletar valores espalhados por várias colunas em uma única coluna,
+# com os nomes das colunas reunidos em uma coluna "chave". Ao reunir, exclua as colunas 
+# que você não quer "reunidas" (neste caso), incluindo os nomes das colunas com o sinal 
+# menos na função de recolha. Por exemplo:
 
 
+data("VADeaths")
+library(tidyr)
+
+# Move age from row names into a column
+# Mover idade dos nomes das linhas para uma coluna
+
+VADeaths  <- VADeaths %>%
+  tbl_df() %>%
+  mutate(age = row.names(VADeaths)) 
+head(VADeaths)
 
 
+# Gather everything but age to tidy data
+# Reúna tudo, exceto idade, para arrumar dados
+
+VADeaths %>%
+  gather(key = key, value = death_rate, -age)
 
 
+# Mesmo que seus dados estejam em um formato arrumado, reunir é ocasionalmente útil,
+# para juntar dados juntos para tirar proveito de facetas ou traçar parcelas separadas
+# com base em uma variável de agrupamento. Por exemplo, se você quiser traçar a relação
+# entre o tempo que um jogador jogou na Copa do Mundo e seu número de salvamentos, 
+# tackles e tiros, com um gráfico separado para cada posição (Figura 1.2), você pode
+# usar reunir para puxe todos os números de salva, toque e dispare em uma única coluna
+# (Número) e use facetas para traçá-los como gráficos separados
+
+library(tidyr)
+library(ggplot2)
+worldcup %>%
+  select(Position, Time, Shots, Tackles, Saves) %>% 
+  gather(Type, Number, -Position, -Time) %>%
+  ggplot(aes(x = Time, y = Number)) + 
+  geom_point() + 
+  facet_grid(Type ~ Position)
 
 
+# A função de propagação é menos comum para arrumar dados. No entanto, pode ser 
+# útil para criar tabelas de resumo. Por exemplo, se você quisesse imprimir uma 
+# tabela do número médio e intervalo de passes por posição para as quatro melhores 
+# equipes nesta Copa do Mundo (Espanha, Holanda, Uruguai e Alemanha), você poderia 
+# executar:
+
+library(knitr)
+
+# Summarize the data to create the summary statistics you want
+# Resumir os dados para criar as estatísticas de resumo desejadas
 
 
+wc_table <- worldcup %>% 
+  filter(Team %in% c("Spain", "Netherlands", "Uruguay", "Germany")) %>%
+  select(Team, Position, Passes) %>%
+  group_by(Team, Position) %>%
+  summarize(ave_passes = mean(Passes),
+            min_passes = min(Passes),
+            max_passes = max(Passes),
+            pass_summary = paste0(round(ave_passes), " (", 
+                                  min_passes, ", ",
+                                  max_passes, ")")) %>%
+  select(Team, Position, pass_summary)
 
+# What the data looks like before using `spread`
+# Como os dados se parecem antes de usar `spread`
 
+wc_table
 
+# Observe neste exemplo como a propagação foi usada no final da seqüência de código
+# para converter os dados resumidos em uma forma que ofereça uma melhor apresentação
+# tabular para um relatório. Na chamada de propagação, primeiro especifique o nome 
+# da coluna a ser usada para os novos nomes das colunas (Posição neste exemplo) e 
+# especifique a coluna a ser usada para os valores das células (pass_summary aqui).
 
-
-
-
-
+# Neste código, usei a função kable do pacote knitr para criar a tabela de resumo em 
+# um formato de tabela e não como saída R básica. Esta função é muito útil para formatar
+# tabelas básicas em documentos de redirecionamento R. Para tabelas mais complexas, 
+# confira os pacotes pander e xtable.
 
 
 
