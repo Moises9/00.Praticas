@@ -361,8 +361,18 @@ wc_table
 # confira os pacotes pander e xtable.
 
 
+# MERGING DATASETS ####
+
+# Muitas vezes, você terá dados em dois conjuntos de dados separados que você gostaria
+# de combinar com base em uma variável comum ou variáveis. Por exemplo, para os dados 
+# de exemplo da Copa do Mundo que usamos, seria interessante adicionar uma coluna com 
+# a finalidade da equipe de cada jogador. Nós incluímos dados com essa informação em 
+# um arquivo chamado "team_standings.csv", que pode ser lido no R objectteam_standings
+# com a chamada :.
 
 
+team_standings <- read_csv("data/team_standings.csv")
+team_standings %>% slice(1:3)
 
 
 
